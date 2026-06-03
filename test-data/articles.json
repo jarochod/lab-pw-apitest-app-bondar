@@ -1,0 +1,21 @@
+{
+  "articles": [
+    {
+      "title": "This is a MOCK test title",
+      "description": "This is a MOCK test description",
+      "slug": "mock-slug-123",
+      "body": "Mock body",
+      "createdAt": "2026-05-28T14:00:00.000Z",
+      "updatedAt": "2026-05-28T14:00:00.000Z",
+      "tagList": [],
+      "favorited": false,
+      "favoritesCount": 0,
+      "author": {
+        "username": "Mock Author",
+        "bio": null,
+        "image": "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f916.png",
+        "following": false
+      }
+    }
+  ]
+}

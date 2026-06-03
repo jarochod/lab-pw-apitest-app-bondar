@@ -6,6 +6,7 @@ import tags from "../test-data/tags.json";
 // s7-ch56 | 56. Modify API Response
 // s7-ch57 | 57. Perform API Request
 // s7-ch58 | 58. Intercept Browser API Response
+// s7-ch59 | 59. Sharing Authentication State
 
 test.beforeEach(async ({ page }) => {
   // 1. Set up the interceptor for tags before navigating
@@ -22,11 +23,6 @@ test.beforeEach(async ({ page }) => {
     page.waitForResponse("*/**/api/tags"),
     page.goto("https://conduit.bondaracademy.com/")
   ]);
-  // Sign in by UI
-  await page.getByText("Sign in").click();
-  await page.getByRole("textbox", { name: "Email" }).fill("jarochod2012@gmail.com");
-  await page.getByRole("textbox", { name: "Password" }).fill("jarochod2012");
-  await page.getByRole("button", { name: "Sign in" }).click();
 });
 
 test("has title and assertion mocked tags", async ({ page }) => {
