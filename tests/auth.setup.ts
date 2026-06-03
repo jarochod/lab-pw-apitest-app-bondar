@@ -1,11 +1,15 @@
 import { test as setup } from "@playwright/test";
+import user from "../.auth/user.json";
+import fs from "fs";
 
 // s7-ch59 | 59. Sharing Authentication State
+// s7-ch60 | 60. API Authentication
 
 // Path where the authentication state will be stored
 const authFile = ".auth/user.json";
 
-setup("authentication", async ({ page }) => {
+setup("authentication", async ({ page, request }) => {
+  /* UI Authentication
   // Navigate to the application
   await page.goto("https://conduit.bondaracademy.com/");
 
@@ -20,4 +24,31 @@ setup("authentication", async ({ page }) => {
 
   // Save storage state (cookies/localStorage) to JSON file
   await page.context().storageState({ path: authFile });
+*/
+
+  // API Authentication
+  // Send a POST request to the login endpoint with user credentials
+  const response = await request.post(
+    "https://conduit-api.bondaracademy.com/api/users/login",
+    {
+      data: {
+        user: { email: "jarochod2012@gmail.com", password: "jarochod2012" },
+      },
+    },
+  );
+
+  // Parse the response body as JSON to extract data
+  const responseBody = await response.json();
+
+  // Extract the JWT access token from the response object
+  const accessToken = responseBody.user.token;
+
+  // Inject the obtained token into the local storage structure of the pre-existing user template
+  user.origins[0].localStorage[0].value = accessToken;
+
+  // Save the updated authentication state back to the auth file
+  fs.writeFileSync(authFile, JSON.stringify(user));
+
+  // Set the access token as an environment variable for potential reuse in tests
+  process.env["ACCESS_TOKEN"] = accessToken;
 });

@@ -7,6 +7,7 @@ import tags from "../test-data/tags.json";
 // s7-ch57 | 57. Perform API Request
 // s7-ch58 | 58. Intercept Browser API Response
 // s7-ch59 | 59. Sharing Authentication State
+// s7-ch60 | 60. API Authentication
 
 test.beforeEach(async ({ page }) => {
   // 1. Set up the interceptor for tags before navigating
@@ -66,21 +67,12 @@ test("has title and assertion mocked tags", async ({ page }) => {
 
 // s7-ch57 | 57. Perform API Request
 test("delete article", async ({ page, request }) => {
-  // 1. Log in via API call to obtain the authorization token
-  const response = await request.post(
-    "https://conduit-api.bondaracademy.com/api/users/login",
-    {
-      data: {
-        user: { email: "jarochod2012@gmail.com", password: "jarochod2012" },
-      },
-    },
-  );
-
-  // Extract the JWT access token from the response body
-  const responseBody = await response.json();
-  const accessToken = responseBody.user.token;
+  // NOTE (Lesson 60): The manual API login block and token extraction have been removed.
+  // The JWT token is now automatically attached to every request sent by the `request` object.
+  // You can find the configuration in: playwright.config.ts -> `use.extraHTTPHeaders` section.
 
   // 2. Create a new article directly via API request to save execution time
+  // The POST request will execute as an authenticated user without explicitly passing the 'Authorization' header
   const articleResponse = await request.post(
     "https://conduit-api.bondaracademy.com/api/articles/",
     {
@@ -92,8 +84,6 @@ test("delete article", async ({ page, request }) => {
           tagList: ["tag1 tag2"],
         },
       },
-      // Pass the extracted token in headers to authenticate the request
-      headers: { Authorization: `Token ${accessToken}` },
     },
   );
 
@@ -147,26 +137,11 @@ test("create article", async ({ page, request }) => {
   const myArticleLocator = page.locator("app-article-list h1").filter({ hasText: "Playwright is awesome" });
   await expect(myArticleLocator).toBeVisible();
 
-  // 4. CLEANUP VIA API - Delete the created article directly via API to keep the state clean
-  // Step 4a: Log in via API request to receive a valid authentication token
-  const response = await request.post(
-    "https://conduit-api.bondaracademy.com/api/users/login",
-    {
-      data: {
-        user: { email: "jarochod2012@gmail.com", password: "jarochod2012" },
-      },
-    },
-  );
-
-  const responseBody = await response.json();
-  const accessToken = responseBody.user.token;
+  // NOTE (Lesson 60): Step 4a (re-logging via API and fetching accessToken) has been completely removed.
+  // The framework automatically authorizes the DELETE request below based on the global header configuration.
 
   // Step 4b: Send a DELETE request using the dynamic slug ID fetched from the UI workflow step
-  const deleteArticleResponse = await request.delete(`https://conduit-api.bondaracademy.com/api/articles/${slugID}`, {
-    headers: {
-      "authorization": `Token ${accessToken}`
-    }
-  });
+  const deleteArticleResponse = await request.delete(`https://conduit-api.bondaracademy.com/api/articles/${slugID}`);
 
   // Assert that the article was successfully deleted on the server (204 No Content)
   expect(deleteArticleResponse.status()).toEqual(204);
@@ -174,3 +149,4 @@ test("create article", async ({ page, request }) => {
   // 5. FINAL UI REFRESH - Refresh the global feed to complete the test lifecycle smoothly
   await page.getByText("Global Feed").click();
 });
+

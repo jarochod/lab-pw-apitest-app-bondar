@@ -30,6 +30,9 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+
+    // Automatically attach the Bearer/Token auth header populated in the setup phase to all outgoing API requests
+    extraHTTPHeaders: { Authorization: `Token ${process.env.ACCESS_TOKEN}` },
   },
 
   /* Configure projects for major browsers */
