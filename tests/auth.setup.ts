@@ -1,5 +1,6 @@
 import { test as setup } from "@playwright/test";
-import user from "../.auth/user.json";
+// Import the template file instead of the actual user.json
+import userTemplate from "../.auth/user.template.json";
 import fs from "fs";
 
 // s7-ch59 | 59. Sharing Authentication State
@@ -44,10 +45,10 @@ setup("authentication", async ({ page, request }) => {
   const accessToken = responseBody.user.token;
 
   // Inject the obtained token into the local storage structure of the pre-existing user template
-  user.origins[0].localStorage[0].value = accessToken;
+  userTemplate.origins[0].localStorage[0].value = accessToken;
 
-  // Save the updated authentication state back to the auth file
-  fs.writeFileSync(authFile, JSON.stringify(user));
+  // Save the updated authentication state from the template to the actual auth file
+  fs.writeFileSync(authFile, JSON.stringify(userTemplate, null, 2));
 
   // Set the access token as an environment variable for potential reuse in tests
   process.env["ACCESS_TOKEN"] = accessToken;
