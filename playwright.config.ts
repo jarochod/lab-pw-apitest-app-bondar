@@ -1,96 +1,51 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+// s8-ch69 | 69. Project Setup and Teardown
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   testDir: "./tests",
-  /* Run tests in files in parallel */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    // baseURL: 'http://localhost:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
-
-    // Automatically attach the Bearer/Token auth header populated in the setup phase to all outgoing API requests
+    // Automatically authorize all outgoing API requests using the token from auth setup
     extraHTTPHeaders: { Authorization: `Token ${process.env.ACCESS_TOKEN}` },
   },
 
-  /* Configure projects for major browsers */
   projects: [
-    // ==========================================
-    // STEP 1: PREPARATION PHASE (SETUP)
-    // ==========================================
-    { name: "setup", testMatch: "auth.setup.ts" },
-
-    // ==========================================
-    // STEP 2: ACTUAL BROWSER TESTS
-    // ==========================================
+    // --- PREPARATION PHASE (SETUP & TEARDOWN) ---
     {
-      name: "chromium",
-      dependencies: ["setup"], // Run only after the "setup" project finishes successfully
+      name: "setup",
+      testMatch: "auth.setup.ts" // Generates the authentication state and access token
+    },
+    {
+      name: "articleSetup",
+      testMatch: "newArticle.setup.ts",
+      dependencies: ["setup"], // Requires valid auth token before creating an article
+      teardown: "articleCleanUp", // Triggers cleanup automatically after dependent tests finish
+    },
+    {
+      name: "articleCleanUp",
+      testMatch: "articleCleanUp.setup.ts"
+    },
+
+    // --- BROWSER TESTS ---
+    {
+      name: "regression",
+      dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
-        storageState: ".auth/user.json", // Inject the pre-saved authenticated state
+        storageState: ".auth/user.json", // Inject saved auth state (cookies/localStorage)
       },
     },
-
     {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"], storageState: ".auth/user.json" },
-      dependencies: ["setup"],
+      name: "likeCounter",
+      testMatch: "likesCounter.spec.ts",
+      dependencies: ["articleSetup"], // Ensures fresh article is ready before test runs
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: ".auth/user.json", // Inject saved auth state to skip UI login
+      },
     },
-
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"], storageState: ".auth/user.json" },
-      dependencies: ["setup"],
-    },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });
