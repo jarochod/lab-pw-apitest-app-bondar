@@ -3,7 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test --headed",
+    "test:ci": "playwright test",
+    "ui": "playwright test --ui",
+    "debug": "playwright test --headed --debug",
+    "likeCounterGlobal": "playwright test --project=likeCounterGlobal"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

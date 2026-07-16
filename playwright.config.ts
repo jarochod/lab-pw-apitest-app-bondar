@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // s8-ch69 | 69. Project Setup and Teardown
+// s8-ch70 | 70. Global Setup and Teardown
 
 export default defineConfig({
   testDir: "./tests",
@@ -12,11 +13,14 @@ export default defineConfig({
     extraHTTPHeaders: { Authorization: `Token ${process.env.ACCESS_TOKEN}` },
   },
 
+  globalSetup: require.resolve("./global-setup.ts"),
+  globalTeardown: require.resolve("./global-teardown.ts"),
+
   projects: [
     // --- PREPARATION PHASE (SETUP & TEARDOWN) ---
     {
       name: "setup",
-      testMatch: "auth.setup.ts" // Generates the authentication state and access token
+      testMatch: "auth.setup.ts", // Generates the authentication state and access token
     },
     {
       name: "articleSetup",
@@ -26,13 +30,14 @@ export default defineConfig({
     },
     {
       name: "articleCleanUp",
-      testMatch: "articleCleanUp.setup.ts"
+      testMatch: "articleCleanUp.setup.ts",
     },
 
     // --- BROWSER TESTS ---
     {
       name: "regression",
       dependencies: ["setup"],
+      testIgnore: "likesCounter.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         storageState: ".auth/user.json", // Inject saved auth state (cookies/localStorage)
@@ -42,6 +47,14 @@ export default defineConfig({
       name: "likeCounter",
       testMatch: "likesCounter.spec.ts",
       dependencies: ["articleSetup"], // Ensures fresh article is ready before test runs
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: ".auth/user.json", // Inject saved auth state to skip UI login
+      },
+    },
+    {
+      name: "likeCounterGlobal",
+      testMatch: "likesCounterGlobal.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         storageState: ".auth/user.json", // Inject saved auth state to skip UI login
